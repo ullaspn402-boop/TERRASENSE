@@ -3,10 +3,15 @@ import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { auth } from '@/lib/auth'
 import { AuthForm } from '@/components/auth-form'
-import { Mountain, ShieldCheck, Activity, Globe } from 'lucide-react'
+import { Mountain, ShieldCheck, Activity, ArrowRight, Sparkles } from 'lucide-react'
 
 export default async function SignInPage() {
-  if ((await auth.api.getSession({ headers: await headers() }))?.user) redirect('/')
+  try {
+    const session = await auth.api.getSession({ headers: await headers() })
+    if (session?.user) redirect('/')
+  } catch (_) {
+    // If DB check fails, stay on sign-in page without crashing
+  }
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-[#090d16] p-6 transition-colors">
@@ -27,8 +32,8 @@ export default async function SignInPage() {
         </div>
 
         {/* Auth Card */}
-        <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 p-8 shadow-sm dark:shadow-2xl">
-          <div className="mb-6">
+        <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 p-8 shadow-sm dark:shadow-2xl space-y-6">
+          <div>
             <h1 className="text-xl font-bold text-slate-900 dark:text-white">Sign In to Platform</h1>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
               Access real-time multi-hazard risk analytics & decision support.
@@ -37,7 +42,19 @@ export default async function SignInPage() {
 
           <AuthForm mode="sign-in" />
 
-          <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400">
+          {/* Quick Demo Access Button */}
+          <div className="pt-2">
+            <Link
+              href="/?guest=true"
+              className="w-full flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-50/60 dark:bg-emerald-950/40 px-4 py-2.5 text-xs font-bold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/50 transition shadow-xs"
+            >
+              <Sparkles size={14} className="text-emerald-600 dark:text-emerald-400" />
+              <span>Explore Platform (Instant Guest Access)</span>
+              <ArrowRight size={13} />
+            </Link>
+          </div>
+
+          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400">
             Need an analyst workspace?{' '}
             <Link className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline" href="/sign-up">
               Create an account

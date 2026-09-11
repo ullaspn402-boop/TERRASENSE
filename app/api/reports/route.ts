@@ -8,8 +8,8 @@ import { eq, desc } from 'drizzle-orm'
 export async function GET() {
   try {
     const session = await auth.api.getSession({ headers: await headers() })
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized. Please log in to view reports.' }, { status: 401 })
+    if (!session?.user?.id || session.user.id === 'guest-analyst') {
+      return NextResponse.json({ reports: [] })
     }
 
     const reports = await db
@@ -20,8 +20,8 @@ export async function GET() {
 
     return NextResponse.json({ reports })
   } catch (error: any) {
-    console.error('Failed to fetch reports:', error)
-    return NextResponse.json({ error: 'Failed to retrieve saved reports.' }, { status: 500 })
+    console.warn('Failed to fetch reports from DB, returning empty list:', error)
+    return NextResponse.json({ reports: [] })
   }
 }
 
