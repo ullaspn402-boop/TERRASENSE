@@ -37,37 +37,53 @@ TerraSense is an autonomous environmental intelligence and decision support plat
 
 ## 🚀 Quickstart Guide
 
-### 1. Prerequisites
-- Node.js 18+ (Node 20+ recommended)
-- Python 3.10+
-- pnpm or npm
+### Option A: One-Click Startup (Recommended)
 
-### 2. Environment Configuration
-Create a `.env` file in the root directory:
+#### In VS Code:
+1. Open the project folder in VS Code.
+2. Press **`Ctrl + Shift + B`** (or press **`F5`**).
+3. VS Code will automatically start both the **FastAPI ML Backend** and **Next.js Frontend** simultaneously!
 
-```env
-DATABASE_URL="postgresql://neondb_owner:YOUR_PASSWORD@ep-sample-host.us-east-2.aws.neon.tech/neondb?sslmode=require"
-BETTER_AUTH_SECRET="your-32-byte-hex-secret"
-BETTER_AUTH_URL="http://localhost:3000"
-PORT=3000
-FASTAPI_URL="http://127.0.0.1:8000"
-NODE_ENV="development"
+#### In Windows Terminal:
+Double-click **`start.bat`** (or run `.\start.bat` in PowerShell/CMD).
+
+#### In macOS / Linux:
+Run `./start.sh` in terminal.
+
+---
+
+### Option B: Manual Setup
+
+#### 1. Install Dependencies
+```bash
+# Python backend dependencies
+pip install -r requirements.txt
+
+# Node.js frontend dependencies
+npm install
+# or: pnpm install
 ```
 
-### 3. Initialize PostgreSQL Database
+#### 2. Environment Configuration
+Copy `.env.example` to `.env`:
+```bash
+cp .env.example .env
+```
+Ensure `DATABASE_URL` points to your Neon PostgreSQL connection string.
+
+#### 3. Initialize PostgreSQL Database
 ```bash
 python scripts/init_db.py
 ```
 
-### 4. Start the FastAPI ML Backend
+#### 4. Start the FastAPI ML Backend
 ```bash
-python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000
+python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-### 5. Start the Next.js Dev Server
+#### 5. Start the Next.js Frontend (in a new terminal)
 ```bash
 npm run dev
-# or: pnpm dev
 ```
 
 Visit **`http://localhost:3000`** in your browser.
