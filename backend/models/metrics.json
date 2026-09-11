@@ -1,0 +1,181 @@
+{
+  "model_type": "RandomForestClassifier",
+  "n_estimators": 120,
+  "features": [
+    "rainfall_24h_mm",
+    "rainfall_72h_mm",
+    "river_gauge_m",
+    "soil_saturation_pct",
+    "elevation_m",
+    "slope_degrees",
+    "impervious_surface_pct",
+    "drainage_capacity_m3s"
+  ],
+  "sample_size": 5000,
+  "train_samples": 4000,
+  "test_samples": 1000,
+  "positive_rate": 0.0868,
+  "evaluation": {
+    "accuracy": 0.98,
+    "precision": 0.9195,
+    "recall": 0.8602,
+    "f1_score": 0.8889,
+    "roc_auc": 0.9949,
+    "pr_auc": 0.9579,
+    "confusion_matrix": [
+      [
+        900,
+        7
+      ],
+      [
+        13,
+        80
+      ]
+    ],
+    "roc_curve": [
+      {
+        "fpr": 0.0,
+        "tpr": 0.0
+      },
+      {
+        "fpr": 0.0011,
+        "tpr": 0.6452
+      },
+      {
+        "fpr": 0.0033,
+        "tpr": 0.6989
+      },
+      {
+        "fpr": 0.0066,
+        "tpr": 0.7742
+      },
+      {
+        "fpr": 0.0077,
+        "tpr": 0.8602
+      },
+      {
+        "fpr": 0.0121,
+        "tpr": 0.871
+      },
+      {
+        "fpr": 0.0176,
+        "tpr": 0.9247
+      },
+      {
+        "fpr": 0.0221,
+        "tpr": 0.9462
+      },
+      {
+        "fpr": 0.0375,
+        "tpr": 0.9677
+      },
+      {
+        "fpr": 0.0783,
+        "tpr": 0.9892
+      },
+      {
+        "fpr": 0.1477,
+        "tpr": 1.0
+      },
+      {
+        "fpr": 0.1555,
+        "tpr": 1.0
+      },
+      {
+        "fpr": 0.1709,
+        "tpr": 1.0
+      },
+      {
+        "fpr": 0.1863,
+        "tpr": 1.0
+      },
+      {
+        "fpr": 0.2051,
+        "tpr": 1.0
+      },
+      {
+        "fpr": 0.2183,
+        "tpr": 1.0
+      },
+      {
+        "fpr": 0.2271,
+        "tpr": 1.0
+      },
+      {
+        "fpr": 0.2359,
+        "tpr": 1.0
+      },
+      {
+        "fpr": 0.2415,
+        "tpr": 1.0
+      },
+      {
+        "fpr": 0.2547,
+        "tpr": 1.0
+      },
+      {
+        "fpr": 0.2657,
+        "tpr": 1.0
+      },
+      {
+        "fpr": 0.2767,
+        "tpr": 1.0
+      },
+      {
+        "fpr": 0.2867,
+        "tpr": 1.0
+      },
+      {
+        "fpr": 0.2955,
+        "tpr": 1.0
+      },
+      {
+        "fpr": 0.3032,
+        "tpr": 1.0
+      },
+      {
+        "fpr": 0.323,
+        "tpr": 1.0
+      },
+      {
+        "fpr": 1.0,
+        "tpr": 1.0
+      }
+    ]
+  },
+  "feature_importances": [
+    {
+      "feature": "river_gauge_m",
+      "importance": 0.359
+    },
+    {
+      "feature": "rainfall_72h_mm",
+      "importance": 0.2206
+    },
+    {
+      "feature": "rainfall_24h_mm",
+      "importance": 0.189
+    },
+    {
+      "feature": "soil_saturation_pct",
+      "importance": 0.1088
+    },
+    {
+      "feature": "drainage_capacity_m3s",
+      "importance": 0.0413
+    },
+    {
+      "feature": "elevation_m",
+      "importance": 0.0358
+    },
+    {
+      "feature": "impervious_surface_pct",
+      "importance": 0.0273
+    },
+    {
+      "feature": "slope_degrees",
+      "importance": 0.0181
+    }
+  ],
+  "trained_at": "2026-09-12T00:06:58.358077"
+}
