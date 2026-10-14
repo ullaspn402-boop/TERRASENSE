@@ -68,7 +68,7 @@ export function OverviewTab({
       value: aqiScore,
       unit: ' AQI',
       level: aqiCategory,
-      subtext: `PM2.5: ${riskData?.air_quality?.pm25 || 28.4} µg/m³`,
+      subtext: `PM2.5: ${riskData?.air_quality?.raw_pollutants?.pm25 ?? 28.4} µg/m³`,
       icon: Wind,
       color: 'text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-800/40',
       badgeLevel: aqiCategory

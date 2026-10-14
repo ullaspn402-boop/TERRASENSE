@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
-  FileText, Plus, Trash2, Eye, Calendar, MapPin, Download, CheckCircle, Database, Search
+  FileText, Plus, Trash2, Eye, Calendar, MapPin, Download, CheckCircle,
+  Database, Search, Filter, Globe, ChevronRight, AlertCircle, RefreshCw
 } from 'lucide-react'
 import { RiskBadge } from './risk-badge'
 
@@ -23,49 +24,195 @@ export interface SavedReportItem {
 interface ReportsTabProps {
   reports: SavedReportItem[]
   loading: boolean
+  currentLocation?: { id: string; name: string }
+  locationsList?: Array<{ id: string; name: string }>
   onOpenCreateModal: () => void
   onDeleteReport: (id: number) => void
+  onSelectLocation?: (locationId: string) => void
 }
 
-export function ReportsTab({ reports, loading, onOpenCreateModal, onDeleteReport }: ReportsTabProps) {
+export function ReportsTab({
+  reports,
+  loading,
+  currentLocation,
+  locationsList = [],
+  onOpenCreateModal,
+  onDeleteReport,
+  onSelectLocation
+}: ReportsTabProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedReport, setSelectedReport] = useState<SavedReportItem | null>(null)
+  
+  // Default filter to current location so reports from other locations don't bleed in!
+  const [locationFilter, setLocationFilter] = useState<string>(currentLocation?.name || 'All')
 
-  const filteredReports = reports.filter(r =>
-    r.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    r.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    r.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    r.decision?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  // Automatically sync when user changes location in the dashboard header
+  useEffect(() => {
+    if (currentLocation?.name) {
+      setLocationFilter(currentLocation.name)
+    }
+  }, [currentLocation?.name])
+
+  // Count reports strictly per location without double-counting
+  const locationCounts = useMemo(() => {
+    const counts: Record<string, number> = { All: reports.length }
+    for (const l of locationsList) {
+      counts[l.name] = 0
+    }
+    for (const r of reports) {
+      const rLoc = (r.location || '').toLowerCase().trim()
+      let matched = false
+      for (const l of locationsList) {
+        const target = l.name.toLowerCase().trim()
+        if (rLoc === target || rLoc.includes(target) || target.includes(rLoc)) {
+          counts[l.name] = (counts[l.name] || 0) + 1
+          matched = true
+          break
+        }
+      }
+      if (!matched && r.location) {
+        counts[r.location] = (counts[r.location] || 0) + 1
+      }
+    }
+    return counts
+  }, [reports, locationsList])
+
+  // 1. Filter strictly by location first
+  const locationFilteredReports = useMemo(() => {
+    if (locationFilter === 'All') return reports
+    return reports.filter(r => {
+      const reportLoc = (r.location || '').toLowerCase().trim()
+      const filterLoc = locationFilter.toLowerCase().trim()
+      return reportLoc === filterLoc || reportLoc.includes(filterLoc) || filterLoc.includes(reportLoc)
+    })
+  }, [reports, locationFilter])
+
+  // 2. Filter by search term within the location-filtered subset
+  const filteredReports = useMemo(() => {
+    if (!searchTerm.trim()) return locationFilteredReports
+    const term = searchTerm.toLowerCase()
+    return locationFilteredReports.filter(r =>
+      r.title?.toLowerCase().includes(term) ||
+      r.location?.toLowerCase().includes(term) ||
+      r.category?.toLowerCase().includes(term) ||
+      r.decision?.toLowerCase().includes(term) ||
+      r.summary?.toLowerCase().includes(term)
+    )
+  }, [locationFilteredReports, searchTerm])
 
   const handlePrint = () => {
     window.print()
   }
+
+  const isFilteredToCurrent = currentLocation?.name && locationFilter === currentLocation.name
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
               PostgreSQL Persistence
             </span>
-            <span className="text-xs text-slate-400 dark:text-slate-500">· {reports.length} Commits Stored</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              · Location-Isolated Audits ({filteredReports.length} {locationFilter !== 'All' ? `for ${locationFilter}` : 'total'})
+            </span>
+            {isFilteredToCurrent && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+                <MapPin size={11} /> Scoped to Active Location
+              </span>
+            )}
           </div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">Environmental Audit Reports & Archival</h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Cryptographically timestamped audits stored in Neon PostgreSQL database with per-user ownership and full parameter telemetry.
+            Cryptographically timestamped audits stored in Neon PostgreSQL database with strict per-location isolation and full parameter telemetry.
           </p>
         </div>
 
         <button
           onClick={onOpenCreateModal}
-          className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 dark:bg-emerald-500 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 dark:hover:bg-emerald-600 transition"
+          className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 dark:bg-emerald-500 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 dark:hover:bg-emerald-600 transition shrink-0"
         >
           <Plus size={15} />
-          <span>Commit New Risk Audit</span>
+          <span>Commit New Audit for {currentLocation?.name || 'Location'}</span>
         </button>
+      </div>
+
+      {/* LOCATION FILTER PILLS */}
+      <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/90 p-3 shadow-xs space-y-3">
+        <div className="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-400 px-1">
+          <span className="flex items-center gap-1.5">
+            <Filter size={13} className="text-emerald-600 dark:text-emerald-400" />
+            <span>Scope by Location:</span>
+          </span>
+          <span className="text-[11px] text-slate-400">
+            {locationFilter !== 'All' ? `Showing audits strictly for ${locationFilter}` : 'Viewing all audit records across all zones'}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {/* Active Location Button (Quick Focus) */}
+          {currentLocation?.name && (
+            <button
+              onClick={() => setLocationFilter(currentLocation.name)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${
+                locationFilter === currentLocation.name
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 border border-emerald-200 dark:border-emerald-800'
+              }`}
+            >
+              <MapPin size={12} />
+              <span>Current: {currentLocation.name}</span>
+              <span className={`px-1.5 py-0.2 rounded-md text-[10px] ${
+                locationFilter === currentLocation.name ? 'bg-emerald-800 text-white' : 'bg-emerald-200/80 dark:bg-emerald-800 text-emerald-800 dark:text-emerald-200'
+              }`}>
+                {locationCounts[currentLocation.name] || 0}
+              </span>
+            </button>
+          )}
+
+          {/* All Locations Button */}
+          <button
+            onClick={() => setLocationFilter('All')}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition whitespace-nowrap ${
+              locationFilter === 'All'
+                ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-sm'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+            }`}
+          >
+            <Globe size={12} />
+            <span>All Locations</span>
+            <span className="px-1.5 py-0.2 rounded-md text-[10px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+              {reports.length}
+            </span>
+          </button>
+
+          {/* Individual Location Pills */}
+          {locationsList.map((loc) => {
+            if (loc.name === currentLocation?.name) return null // Already shown as active
+            const count = locationCounts[loc.name] || 0
+            const isSelected = locationFilter === loc.name
+            return (
+              <button
+                key={loc.id}
+                onClick={() => setLocationFilter(loc.name)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition whitespace-nowrap ${
+                  isSelected
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-800'
+                }`}
+              >
+                <span>{loc.name}</span>
+                <span className={`px-1.5 py-0.2 rounded-md text-[10px] ${
+                  isSelected ? 'bg-emerald-800 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                }`}>
+                  {count}
+                </span>
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       {/* SEARCH AND FILTER BAR */}
@@ -76,12 +223,12 @@ export function ReportsTab({ reports, loading, onOpenCreateModal, onDeleteReport
             type="text"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            placeholder="Search reports by title, location, decision, or category…"
+            placeholder={`Search audits within ${locationFilter !== 'All' ? locationFilter : 'all locations'} by title, decision, or category…`}
             className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 pl-10 pr-4 py-2 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 outline-none transition focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-800"
           />
         </div>
         <div className="text-xs text-slate-500 dark:text-slate-400 font-medium px-2 shrink-0">
-          Showing <span className="font-bold text-slate-900 dark:text-white">{filteredReports.length}</span> of {reports.length}
+          Showing <span className="font-bold text-slate-900 dark:text-white">{filteredReports.length}</span> of {locationFilteredReports.length} audits
         </div>
       </div>
 
@@ -97,10 +244,41 @@ export function ReportsTab({ reports, loading, onOpenCreateModal, onDeleteReport
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400">
               <FileText size={24} />
             </div>
-            <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">No Audits Found</h4>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              {searchTerm ? 'No reports matched your search query.' : 'No audit reports have been saved yet. Click "Commit New Risk Audit" above to save the current telemetry state.'}
+            <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+              {locationFilter !== 'All'
+                ? `No Audits Found for ${locationFilter}`
+                : 'No Audit Reports Found'}
+            </h4>
+            <p className="text-xs text-slate-500 max-w-md mx-auto">
+              {searchTerm ? (
+                'No reports matched your search query in this location.'
+              ) : locationFilter !== 'All' ? (
+                <>
+                  No audit reports have been saved specifically for <span className="font-bold text-slate-700 dark:text-slate-300">{locationFilter}</span> yet.
+                  Reports from other locations are isolated so you only see audits relevant to this location.
+                </>
+              ) : (
+                'No audit reports have been saved in the database yet. Click "Commit New Audit" above to record current conditions.'
+              )}
             </p>
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <button
+                onClick={onOpenCreateModal}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 text-white px-3.5 py-2 text-xs font-bold hover:bg-emerald-700 transition"
+              >
+                <Plus size={14} />
+                <span>Commit Audit for {locationFilter !== 'All' ? locationFilter : (currentLocation?.name || 'Current Location')}</span>
+              </button>
+              {locationFilter !== 'All' && reports.length > 0 && (
+                <button
+                  onClick={() => setLocationFilter('All')}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-3.5 py-2 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+                >
+                  <Globe size={14} />
+                  <span>View All Locations ({reports.length})</span>
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -122,7 +300,7 @@ export function ReportsTab({ reports, loading, onOpenCreateModal, onDeleteReport
                       <p className="font-bold text-slate-900 dark:text-white line-clamp-1">{report.title}</p>
                       <p className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
                         <MapPin size={11} className="text-emerald-500" />
-                        <span>{report.location}</span>
+                        <span className="font-medium text-slate-600 dark:text-slate-400">{report.location}</span>
                       </p>
                     </td>
                     <td className="py-3.5 px-4">
@@ -176,8 +354,11 @@ export function ReportsTab({ reports, loading, onOpenCreateModal, onDeleteReport
                   <RiskBadge level={selectedReport.riskLevel} score={selectedReport.riskScore} size="sm" />
                 </div>
                 <h3 className="text-lg font-black text-slate-900 dark:text-white">{selectedReport.title}</h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Location: {selectedReport.location} · {new Date(selectedReport.createdAt).toLocaleString()}
+                <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1.5">
+                  <MapPin size={12} className="text-emerald-500" />
+                  <span className="font-semibold text-slate-700 dark:text-slate-300">{selectedReport.location}</span>
+                  <span>·</span>
+                  <span>{new Date(selectedReport.createdAt).toLocaleString()}</span>
                 </p>
               </div>
 
@@ -212,7 +393,13 @@ export function ReportsTab({ reports, loading, onOpenCreateModal, onDeleteReport
                 <div>
                   <span className="font-bold uppercase text-slate-400 text-[10px]">Telemetry Metrics Payload</span>
                   <pre className="mt-1 bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] font-mono overflow-x-auto">
-                    {JSON.stringify(JSON.parse(selectedReport.metricsJson), null, 2)}
+                    {(() => {
+                      try {
+                        return JSON.stringify(typeof selectedReport.metricsJson === 'string' ? JSON.parse(selectedReport.metricsJson) : selectedReport.metricsJson, null, 2)
+                      } catch (_) {
+                        return String(selectedReport.metricsJson)
+                      }
+                    })()}
                   </pre>
                 </div>
               )}

@@ -6,7 +6,12 @@ import { AuthForm } from '@/components/auth-form'
 import { Mountain, ShieldCheck, Activity } from 'lucide-react'
 
 export default async function SignUpPage() {
-  if ((await auth.api.getSession({ headers: await headers() }))?.user) redirect('/')
+  try {
+    const session = await auth.api.getSession({ headers: await headers() })
+    if (session?.user) redirect('/')
+  } catch (_) {
+    // If DB check fails, stay on sign-up page without crashing
+  }
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-[#090d16] p-6 transition-colors">

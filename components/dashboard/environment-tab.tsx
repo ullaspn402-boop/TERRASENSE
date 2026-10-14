@@ -141,12 +141,12 @@ export function EnvironmentTab({ location, riskData }: EnvironmentTabProps) {
           </div>
           <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/90 p-5 shadow-xs space-y-3">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Particulate Matter 2.5 (PM2.5)</span>
-            <p className="text-3xl font-black font-mono text-slate-900 dark:text-white">{air.pm25 || 28.4} µg/m³</p>
+            <p className="text-3xl font-black font-mono text-slate-900 dark:text-white">{air.raw_pollutants?.pm25 ?? 28.4} µg/m³</p>
             <p className="text-[11px] text-slate-500">WHO 24h standard: 15 µg/m³</p>
           </div>
           <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/90 p-5 shadow-xs space-y-3">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Particulate Matter 10 (PM10)</span>
-            <p className="text-3xl font-black font-mono text-slate-900 dark:text-white">{air.pm10 || 45.2} µg/m³</p>
+            <p className="text-3xl font-black font-mono text-slate-900 dark:text-white">{air.raw_pollutants?.pm10 ?? 45.2} µg/m³</p>
             <p className="text-[11px] text-slate-500">Coarse particulate fraction</p>
           </div>
         </div>
@@ -161,12 +161,12 @@ export function EnvironmentTab({ location, riskData }: EnvironmentTabProps) {
           </div>
           <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/90 p-5 shadow-xs space-y-3">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Dissolved Oxygen (DO)</span>
-            <p className="text-3xl font-black font-mono text-slate-900 dark:text-white">{water.dissolved_oxygen_mg_l || 7.2} mg/L</p>
+            <p className="text-3xl font-black font-mono text-slate-900 dark:text-white">{water.parameters?.dissolved_oxygen_mg_l ?? 7.2} mg/L</p>
             <p className="text-[11px] text-slate-500">Healthy aquatic baseline &gt; 6.5 mg/L</p>
           </div>
           <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/90 p-5 shadow-xs space-y-3">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Potential Hydrogen (pH)</span>
-            <p className="text-3xl font-black font-mono text-slate-900 dark:text-white">{water.ph || 7.4}</p>
+            <p className="text-3xl font-black font-mono text-slate-900 dark:text-white">{water.parameters?.ph ?? 7.4}</p>
             <p className="text-[11px] text-slate-500">Neutral freshwater boundary</p>
           </div>
         </div>
@@ -176,18 +176,18 @@ export function EnvironmentTab({ location, riskData }: EnvironmentTabProps) {
         <div className="grid gap-6 md:grid-cols-3">
           <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/90 p-5 shadow-xs space-y-3">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Soil Moisture Saturation</span>
-            <p className="text-3xl font-black font-mono text-amber-600 dark:text-amber-400">{soil.soil_saturation_pct || 78}%</p>
+            <p className="text-3xl font-black font-mono text-amber-600 dark:text-amber-400">{soil.moisture_pct ?? 78}%</p>
             <p className="text-[11px] text-slate-500">Near-saturation field capacity</p>
           </div>
           <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/90 p-5 shadow-xs space-y-3">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Slope Instability Index</span>
-            <p className="text-3xl font-black font-mono text-slate-900 dark:text-white">{soil.slope_instability_score || 52}/100</p>
+            <p className="text-3xl font-black font-mono text-slate-900 dark:text-white">{soil.erosion_risk_score ?? 52}/100</p>
             <p className="text-[11px] text-slate-500">Geotechnical shearing risk moderate</p>
           </div>
           <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/90 p-5 shadow-xs space-y-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Pore Water Pressure</span>
-            <p className="text-3xl font-black font-mono text-slate-900 dark:text-white">{soil.pore_pressure_kpa || 14.8} kPa</p>
-            <p className="text-[11px] text-slate-500">Subsurface piezometer reading</p>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Runoff Coefficient</span>
+            <p className="text-3xl font-black font-mono text-slate-900 dark:text-white">{soil.runoff_coefficient ?? 0.48}</p>
+            <p className="text-[11px] text-slate-500">Surface runoff potential index</p>
           </div>
         </div>
       )}

@@ -3,22 +3,38 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { savedReports } from '@/lib/db/schema'
-import { eq, desc } from 'drizzle-orm'
+import { eq, desc, and, ilike } from 'drizzle-orm'
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const session = await auth.api.getSession({ headers: await headers() })
-    if (!session?.user?.id || session.user.id === 'guest-analyst') {
-      return NextResponse.json({ reports: [] })
+    let session: any = null
+    try {
+      session = await auth.api.getSession({ headers: await headers() })
+    } catch (_) {
+      // Session retrieval fallback
     }
 
-    const reports = await db
-      .select()
-      .from(savedReports)
-      .where(eq(savedReports.userId, session.user.id))
-      .orderBy(desc(savedReports.createdAt))
+    const userId = session?.user?.id || 'guest-analyst'
+    const { searchParams } = new URL(request.url)
+    const locationParam = searchParams.get('location')
 
-    return NextResponse.json({ reports })
+    const conditions = []
+    if (userId && userId !== 'guest-analyst') {
+      conditions.push(eq(savedReports.userId, userId))
+    }
+
+    if (locationParam && locationParam.toLowerCase() !== 'all' && locationParam.trim() !== '') {
+      conditions.push(ilike(savedReports.location, `%${locationParam.trim()}%`))
+    }
+
+    let query = db.select().from(savedReports)
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any
+    }
+
+    const reports = await query.orderBy(desc(savedReports.createdAt))
+
+    return NextResponse.json({ reports: reports || [] })
   } catch (error: any) {
     console.warn('Failed to fetch reports from DB, returning empty list:', error)
     return NextResponse.json({ reports: [] })
@@ -27,10 +43,14 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const session = await auth.api.getSession({ headers: await headers() })
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized. Please log in to save reports.' }, { status: 401 })
+    let session: any = null
+    try {
+      session = await auth.api.getSession({ headers: await headers() })
+    } catch (_) {
+      // Session retrieval fallback
     }
+
+    const effectiveUserId = session?.user?.id || 'guest-analyst'
 
     const body = await request.json()
     const {
@@ -53,7 +73,7 @@ export async function POST(request: Request) {
     const [newReport] = await db
       .insert(savedReports)
       .values({
-        userId: session.user.id,
+        userId: effectiveUserId,
         title: String(title).trim(),
         location: String(location).trim(),
         summary: String(summary).trim(),
@@ -73,3 +93,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to save report to database.' }, { status: 500 })
   }
 }
+

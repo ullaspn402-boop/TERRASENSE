@@ -20,11 +20,12 @@ export function PredictionsTab({ location, riskData, mlMetrics }: PredictionsTab
   const xaiFactors = riskData?.explainable_ai?.factors || []
 
   // ML Evaluation metrics from backend/models/metrics.json
-  const accuracy = ((mlMetrics?.accuracy || 0.98) * 100).toFixed(1)
-  const precision = ((mlMetrics?.precision || 0.9195) * 100).toFixed(1)
-  const recall = ((mlMetrics?.recall || 0.8602) * 100).toFixed(1)
-  const f1 = ((mlMetrics?.f1_score || 0.8889) * 100).toFixed(1)
-  const rocauc = (mlMetrics?.roc_auc || 0.9949).toFixed(4)
+  const eval_ = mlMetrics?.evaluation || {}
+  const accuracy = ((eval_.accuracy || 0.98) * 100).toFixed(1)
+  const precision = ((eval_.precision || 0.9195) * 100).toFixed(1)
+  const recall = ((eval_.recall || 0.8602) * 100).toFixed(1)
+  const f1 = ((eval_.f1_score || 0.8889) * 100).toFixed(1)
+  const rocauc = (eval_.roc_auc || 0.9949).toFixed(4)
   const sampleSize = mlMetrics?.sample_size || 5000
   const modelType = mlMetrics?.model_type || 'RandomForestClassifier'
 
@@ -175,7 +176,7 @@ export function PredictionsTab({ location, riskData, mlMetrics }: PredictionsTab
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500 dark:text-slate-400">Feature Dimensions</span>
-              <span className="font-mono font-bold text-slate-900 dark:text-white">6 Multi-Sensor Inputs</span>
+              <span className="font-mono font-bold text-slate-900 dark:text-white">{mlMetrics?.features?.length || 8} Multi-Sensor Inputs</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500 dark:text-slate-400">Inference Latency</span>

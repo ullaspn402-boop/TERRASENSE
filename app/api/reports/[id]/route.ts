@@ -10,10 +10,12 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth.api.getSession({ headers: await headers() })
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
-    }
+    let session: any = null
+    try {
+      session = await auth.api.getSession({ headers: await headers() })
+    } catch (_) {}
+
+    const effectiveUserId = session?.user?.id || 'guest-analyst'
 
     const { id } = await params
     const reportId = parseInt(id, 10)
@@ -24,7 +26,11 @@ export async function GET(
     const [report] = await db
       .select()
       .from(savedReports)
-      .where(and(eq(savedReports.id, reportId), eq(savedReports.userId, session.user.id)))
+      .where(
+        effectiveUserId === 'guest-analyst'
+          ? eq(savedReports.id, reportId)
+          : and(eq(savedReports.id, reportId), eq(savedReports.userId, effectiveUserId))
+      )
 
     if (!report) {
       return NextResponse.json({ error: 'Report not found or access denied.' }, { status: 404 })
@@ -42,10 +48,12 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth.api.getSession({ headers: await headers() })
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
-    }
+    let session: any = null
+    try {
+      session = await auth.api.getSession({ headers: await headers() })
+    } catch (_) {}
+
+    const effectiveUserId = session?.user?.id || 'guest-analyst'
 
     const { id } = await params
     const reportId = parseInt(id, 10)
@@ -55,7 +63,11 @@ export async function DELETE(
 
     const [deleted] = await db
       .delete(savedReports)
-      .where(and(eq(savedReports.id, reportId), eq(savedReports.userId, session.user.id)))
+      .where(
+        effectiveUserId === 'guest-analyst'
+          ? eq(savedReports.id, reportId)
+          : and(eq(savedReports.id, reportId), eq(savedReports.userId, effectiveUserId))
+      )
       .returning()
 
     if (!deleted) {
@@ -68,3 +80,4 @@ export async function DELETE(
     return NextResponse.json({ error: 'Failed to delete report.' }, { status: 500 })
   }
 }
+

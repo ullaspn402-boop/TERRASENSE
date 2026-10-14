@@ -1,5 +1,6 @@
 import os
 import json
+import math
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Optional
 import numpy as np
@@ -327,6 +328,7 @@ def get_risk_assessment(location_id: str):
     now = datetime.now(timezone.utc).isoformat()
     return {
         "location": location,
+        "sensor_readings": raw,
         "data_notice": "Demo / Sample Data (Simulated telemetry evaluated through live ML & scientific models)",
         "updated_at": now,
         "flood": {
@@ -383,8 +385,17 @@ def run_what_if_scenario(location_id: str, scenario: ScenarioRequest):
     b_ml_flood = run_ml_flood_prediction(baseline)
     b_heat = calculate_heat_stress(baseline["temperature_c"], baseline["humidity_pct"])
     b_air = calculate_aqi({"pm25": baseline["pm25"], "pm10": baseline["pm10"], "no2": baseline["no2"], "co": baseline["co"]})
-    b_water = calculate_water_quality(baseline)
-    b_soil = calculate_soil_risk(baseline)
+    b_water = calculate_water_quality({
+        "ph": baseline["ph"], "turbidity_ntu": baseline["turbidity_ntu"],
+        "dissolved_oxygen_mg_l": baseline["dissolved_oxygen_mg_l"],
+        "conductivity_us_cm": baseline["conductivity_us_cm"], "tds_mg_l": baseline["tds_mg_l"]
+    })
+    b_soil = calculate_soil_risk({
+        "soil_moisture_pct": baseline["soil_saturation_pct"],
+        "slope_degrees": baseline["slope_degrees"],
+        "vegetation_cover_pct": baseline["vegetation_cover_pct"],
+        "compaction_kpa": baseline["compaction_kpa"]
+    })
     b_decision = generate_decision(b_curr_flood, b_ml_flood, b_heat, b_air, b_water, b_soil)
 
     # Run engines on Scenario
@@ -392,8 +403,17 @@ def run_what_if_scenario(location_id: str, scenario: ScenarioRequest):
     s_ml_flood = run_ml_flood_prediction(modified)
     s_heat = calculate_heat_stress(modified["temperature_c"], modified["humidity_pct"])
     s_air = calculate_aqi({"pm25": modified["pm25"], "pm10": modified["pm10"], "no2": modified["no2"], "co": modified["co"]})
-    s_water = calculate_water_quality(modified)
-    s_soil = calculate_soil_risk(modified)
+    s_water = calculate_water_quality({
+        "ph": modified["ph"], "turbidity_ntu": modified["turbidity_ntu"],
+        "dissolved_oxygen_mg_l": modified["dissolved_oxygen_mg_l"],
+        "conductivity_us_cm": modified["conductivity_us_cm"], "tds_mg_l": modified["tds_mg_l"]
+    })
+    s_soil = calculate_soil_risk({
+        "soil_moisture_pct": modified["soil_saturation_pct"],
+        "slope_degrees": modified["slope_degrees"],
+        "vegetation_cover_pct": modified["vegetation_cover_pct"],
+        "compaction_kpa": modified["compaction_kpa"]
+    })
     s_decision = generate_decision(s_curr_flood, s_ml_flood, s_heat, s_air, s_water, s_soil)
 
     # Calculate Deltas
